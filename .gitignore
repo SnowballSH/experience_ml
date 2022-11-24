@@ -2,7 +2,7 @@
 **/*.rs.bk
 Cargo.lock
 bin/
-pkg/
+frontend/pkg/
 wasm-pack.log
 
 *.iml

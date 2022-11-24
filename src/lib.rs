@@ -13,7 +13,15 @@ extern {
 }
 
 #[wasm_bindgen]
-pub fn greet() {
+pub fn init() {
     set_panic_hook();
-    alert("Hello, experience_ml!");
+}
+
+#[wasm_bindgen]
+pub fn next(num: i32) -> i32 {
+    if num & 1 == 0 {
+        num / 2
+    } else {
+        num * 3 + 1
+    }
 }
