@@ -2,6 +2,8 @@ import {css, html, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import 'wired-elements';
 
+import './plotInput';
+
 import * as backend from '../pkg/';
 
 @customElement('main-app')
@@ -19,6 +21,7 @@ export class App extends LitElement {
                 <p>
                     Number is ${this.num}
                 </p>
+                <plot-input></plot-input>
                 </body>
             </div>
         `;
@@ -33,6 +36,6 @@ export class App extends LitElement {
 
 declare global {
     interface HTMLElementTagNameMap {
-        'my-element': App;
+        'main-app': App;
     }
 }
