@@ -1,4 +1,6 @@
 mod utils;
+mod network;
+mod activations;
 
 use wasm_bindgen::prelude::*;
 use crate::utils::set_panic_hook;
