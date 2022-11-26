@@ -134,6 +134,8 @@ export class PlotInput extends LitElement {
         .plot-input-canvas {
             border: 1px solid black;
             background-color: #fafafa;
+            
+            cursor: crosshair;
         }
         
         .plot-input-button-red {

@@ -26,11 +26,11 @@ impl DynamicDenseLayer {
     pub fn randomize(&mut self) {
         for i in 0..self.input_size {
             for j in 0..self.output_size {
-                self.weights[i][j] = js_sys::Math::random() as f32 * 50.0 - 25.0;
+                self.weights[i][j] = (js_sys::Math::random() as f32 * 2.0 - 1.0) / (self.input_size as f32).sqrt();
             }
         }
         for j in 0..self.output_size {
-            self.biases[j] = js_sys::Math::random() as f32 * 50.0 - 25.0;
+            self.biases[j] = (js_sys::Math::random() as f32 * 2.0 - 1.0) / (self.output_size as f32).sqrt();
         }
     }
 
@@ -87,12 +87,20 @@ impl DynamicNetwork {
         res
     }
 
+    pub fn mse_node(output: f32, expected_output: f32) -> f32 {
+        (expected_output - output).powi(2)
+    }
+
+    pub fn derivative_mse_node(output: f32, expected_output: f32) -> f32 {
+        2.0 * (output - expected_output)
+    }
+
     pub fn mse(&self, input: &Vec<f32>, expected_output: &Vec<f32>) -> f32 {
         let output = self.forward(input);
         let mut res = 0.0;
 
         for i in 0..output.len() {
-            res += (output[i] - expected_output[i]).powi(2);
+            res += Self::mse_node(output[i], expected_output[i]);
         }
 
         res / output.len() as f32

@@ -51,6 +51,19 @@ export class App extends LitElement {
         }
 
         realCtx.drawImage(plti.canvas!, 0, 0);
+
+        let dataX = plti.inputs;
+        let dataY = plti.outputs;
+
+        let cost = 0;
+
+        for (let i = 0; i < dataX.length; i++) {
+            const xs = dataX[i];
+            const ys = dataY[i];
+            cost += this.model!.mse_from_js(new Float32Array(xs), new Float32Array(ys))
+        }
+
+        console.log(cost);
     }
 
     static styles = css``;
