@@ -21,13 +21,15 @@ export class PlotInput extends LitElement {
     pen: number = 0;
 
     inputs: number[][] = [];
-    outputs: number[] = [];
+    outputs: number[][] = [];
 
     canvas: HTMLCanvasElement | null = null;
     roughCanvas: RoughCanvas | null = null;
 
+    realCanvas: HTMLCanvasElement | null = null;
+
     getMousePos(e: MouseEvent) {
-        const rect = this.canvas!.getBoundingClientRect();
+        const rect = this.realCanvas!.getBoundingClientRect();
         return {
             x: e.clientX - rect.left,
             y: e.clientY - rect.top,
@@ -57,8 +59,14 @@ export class PlotInput extends LitElement {
                     break;
             }
 
+            let ctx = this.realCanvas!.getContext("2d")!;
+            ctx.clearRect(0, 0, this.width, this.height);
+            ctx.drawImage(this.canvas!, 0, 0);
+
             this.inputs.push([pos.x, pos.y]);
-            this.outputs.push(this.pen);
+            let arr = [0, 0, 0];
+            arr[this.pen] = 1;
+            this.outputs.push(arr);
         }
     }
 
@@ -66,8 +74,10 @@ export class PlotInput extends LitElement {
         super.updated(_changedProperties);
 
         if (this.canvas === null) {
-            this.canvas = this.shadowRoot!.getElementById(`plot-input-canvas-${this.id}`) as HTMLCanvasElement;
+            this.canvas = this.shadowRoot!.getElementById(`plot-input-hidden-canvas-${this.id}`) as HTMLCanvasElement;
             this.roughCanvas = rough.canvas(this.canvas);
+
+            this.realCanvas = this.shadowRoot!.getElementById(`plot-input-canvas-${this.id}`) as HTMLCanvasElement;
         }
     }
 
@@ -89,6 +99,8 @@ export class PlotInput extends LitElement {
 
     clearCanvas() {
         this.canvas!.getContext("2d")!.clearRect(0, 0, this.width, this.height);
+        this.realCanvas!.getContext("2d")!.clearRect(0, 0, this.width, this.height);
+
         this.choosePen(0);
 
         this.inputs = [];
@@ -98,12 +110,20 @@ export class PlotInput extends LitElement {
     render() {
         return html`
             <div>
-                <wired-button @click=${() => this.choosePen(0)} class="plot-input-button-red" style=${this.pen === 0 ? "transform: translateY(4px)" : ""}>Red</wired-button>
-                <wired-button @click=${() => this.choosePen(1)} class="plot-input-button-blue" style=${this.pen === 1 ? "transform: translateY(4px)" : ""}>Blue</wired-button>
-                <wired-button @click=${() => this.choosePen(2)} class="plot-input-button-green" style=${this.pen === 2 ? "transform: translateY(4px)" : ""}>Green</wired-button>
+                <wired-button @click=${() => this.choosePen(0)} class="plot-input-button-red"
+                              style=${this.pen === 0 ? "transform: translateY(4px)" : ""}>Red
+                </wired-button>
+                <wired-button @click=${() => this.choosePen(1)} class="plot-input-button-blue"
+                              style=${this.pen === 1 ? "transform: translateY(4px)" : ""}>Blue
+                </wired-button>
+                <wired-button @click=${() => this.choosePen(2)} class="plot-input-button-green"
+                              style=${this.pen === 2 ? "transform: translateY(4px)" : ""}>Green
+                </wired-button>
                 <wired-button @click=${this.clearCanvas} class="plot-input-button-clear">Clear</wired-button>
                 <br/>
                 <br/>
+                <canvas id="plot-input-hidden-canvas-${this.id}" width="${this.width}"
+                        height="${this.height}" style="display: none"></canvas>
                 <canvas class="plot-input-canvas" id="plot-input-canvas-${this.id}" width="${this.width}"
                         height="${this.height}"></canvas>
             </div>

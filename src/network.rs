@@ -26,11 +26,11 @@ impl DynamicDenseLayer {
     pub fn randomize(&mut self) {
         for i in 0..self.input_size {
             for j in 0..self.output_size {
-                self.weights[i][j] = js_sys::Math::random() as f32 * 2.0 - 1.0;
+                self.weights[i][j] = js_sys::Math::random() as f32 * 50.0 - 25.0;
             }
         }
         for j in 0..self.output_size {
-            self.biases[j] = js_sys::Math::random() as f32 * 2.0 - 1.0;
+            self.biases[j] = js_sys::Math::random() as f32 * 50.0 - 25.0;
         }
     }
 

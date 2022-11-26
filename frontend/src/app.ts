@@ -13,7 +13,7 @@ export class App extends LitElement {
 
     connectedCallback() {
         super.connectedCallback();
-        this.model = backend.DynamicNetwork.new_from_js(new Uint32Array([2, 4, 8, 3]));
+        this.model = backend.DynamicNetwork.new_from_js(new Uint32Array([2, 4, 3]));
         this.model.randomize_from_js();
     }
 
@@ -31,20 +31,26 @@ export class App extends LitElement {
     }
 
     onClick() {
-        this.model!.randomize_from_js();
         let plti = this.shadowRoot!.getElementById('plti') as PlotInput;
-        let ctx = plti.canvas!.getContext("2d")!;
+
+        let realCtx = plti.realCanvas!.getContext("2d")!;
+
+        this.model!.randomize_from_js();
         const colors = ['#ff9999', '#9eb9ff', '#a9ffa8'];
-        const delta = 3;
+        const delta = 4;
+
+        realCtx.clearRect(0, 0, plti.width, plti.height);
 
         for (let x = 0; x < plti.width; x += delta) {
             for (let y = 0; y < plti.height; y += delta) {
-                let output = this.model!.forward_from_js(new Float32Array([x, y]));
+                let output = this.model!.forward_from_js(new Float32Array([x / plti.width, y / plti.height]));
                 let i = output.reduce((iMax, x, i, arr) => x > arr[iMax] ? i : iMax, 0);
-                ctx.fillStyle = colors[i];
-                ctx.fillRect(x, y, delta, delta);
+                realCtx.fillStyle = colors[i];
+                realCtx.fillRect(x, y, delta, delta);
             }
         }
+
+        realCtx.drawImage(plti.canvas!, 0, 0);
     }
 
     static styles = css``;
