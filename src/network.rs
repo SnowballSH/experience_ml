@@ -1,6 +1,7 @@
-use rand::random;
+use js_sys;
+use wasm_bindgen::prelude::*;
 
-use crate::activations::relu;
+use crate::activations::{relu, sigmoid};
 
 #[derive(Clone, Debug)]
 pub struct DynamicDenseLayer {
@@ -18,18 +19,18 @@ impl DynamicDenseLayer {
             output_size,
             weights: vec![vec![0.0; output_size]; input_size],
             biases: vec![0.0; output_size],
-            activation: relu,
+            activation: sigmoid,
         }
     }
 
     pub fn randomize(&mut self) {
         for i in 0..self.input_size {
             for j in 0..self.output_size {
-                self.weights[i][j] = random::<f32>() * 2.0 - 1.0;
+                self.weights[i][j] = js_sys::Math::random() as f32 * 2.0 - 1.0;
             }
         }
         for j in 0..self.output_size {
-            self.biases[j] = random::<f32>() * 2.0 - 1.0;
+            self.biases[j] = js_sys::Math::random() as f32 * 2.0 - 1.0;
         }
     }
 
@@ -48,11 +49,11 @@ impl DynamicDenseLayer {
     }
 }
 
-#[Derive(Clone, Debug)]
+#[wasm_bindgen]
+#[derive(Clone, Debug)]
 pub struct DynamicNetwork {
     pub num_layers: usize,
-    pub neurons: Vec<usize>,
-    pub layers: Vec<DynamicDenseLayer>,
+    layers: Vec<DynamicDenseLayer>,
 }
 
 impl DynamicNetwork {
@@ -66,7 +67,6 @@ impl DynamicNetwork {
 
         DynamicNetwork {
             num_layers,
-            neurons,
             layers,
         }
     }
@@ -96,5 +96,24 @@ impl DynamicNetwork {
         }
 
         res / output.len() as f32
+    }
+}
+
+#[wasm_bindgen]
+impl DynamicNetwork {
+    pub fn new_from_js(neurons: &[usize]) -> DynamicNetwork {
+        DynamicNetwork::new(Vec::from(neurons))
+    }
+
+    pub fn randomize_from_js(&mut self) {
+        self.randomize();
+    }
+
+    pub fn forward_from_js(&self, input: &[f32]) -> Vec<f32> {
+        self.forward(&Vec::from(input))
+    }
+
+    pub fn mse_from_js(&self, input: &[f32], expected_output: &[f32]) -> f32 {
+        self.mse(&Vec::from(input), &Vec::from(expected_output))
     }
 }
