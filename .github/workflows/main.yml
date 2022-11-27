@@ -28,15 +28,15 @@ jobs:
       - name: Build WASM
         run: |
           sh ./build_rs.sh
-          cd ./frontend
 
       - name: Yarn
         uses: mskelton/setup-yarn@v1
         
       - name: Build
         run: |
+          cd ./frontend
           yarn install
-          yarn build
+          yarn run build
           
       - name: GitHub Pages
         uses: crazy-max/ghaction-github-pages@v3.1.0
