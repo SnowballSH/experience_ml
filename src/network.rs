@@ -1,7 +1,7 @@
 use js_sys;
 use wasm_bindgen::prelude::*;
 
-use crate::activations::{relu, sigmoid};
+use crate::activations::{sigmoid};
 
 #[derive(Clone, Debug)]
 pub struct DynamicDenseLayer {
@@ -10,6 +10,9 @@ pub struct DynamicDenseLayer {
     pub weights: Vec<Vec<f32>>,
     pub biases: Vec<f32>,
     pub activation: fn(f32) -> f32,
+
+    pub weighted_inputs: Vec<f32>,
+    pub outputs: Vec<f32>,
 }
 
 impl DynamicDenseLayer {
@@ -20,6 +23,9 @@ impl DynamicDenseLayer {
             weights: vec![vec![0.0; output_size]; input_size],
             biases: vec![0.0; output_size],
             activation: sigmoid,
+
+            weighted_inputs: vec![0.0; output_size],
+            outputs: vec![0.0; output_size],
         }
     }
 
@@ -34,18 +40,17 @@ impl DynamicDenseLayer {
         }
     }
 
-    pub fn forward(&self, input: &Vec<f32>) -> Vec<f32> {
-        let mut res = Vec::with_capacity(self.output_size);
-
+    pub fn forward(&mut self, input: &[f32]) -> &Vec<f32> {
         for out_node in 0..self.output_size {
             let mut acc = self.biases[out_node];
-            for in_node in 0..self.input_size {
-                acc += input[in_node] * self.weights[in_node][out_node];
+            for (in_node, val) in input.iter().enumerate() {
+                acc += val * self.weights[in_node][out_node];
             }
-            res.push((self.activation)(acc));
+            self.weighted_inputs[out_node] = acc;
+            self.outputs[out_node] = (self.activation)(acc);
         }
 
-        res
+        &self.outputs
     }
 }
 
@@ -77,11 +82,11 @@ impl DynamicNetwork {
         }
     }
 
-    pub fn forward(&self, input: &Vec<f32>) -> Vec<f32> {
-        let mut res = input.clone();
+    pub fn forward<'a>(&'a mut self, input: &'a Vec<f32>) -> &Vec<f32> {
+        let mut res = input;
 
-        for layer in &self.layers {
-            res = layer.forward(&res);
+        for layer in &mut self.layers {
+            res = layer.forward(res);
         }
 
         res
@@ -95,7 +100,7 @@ impl DynamicNetwork {
         2.0 * (output - expected_output)
     }
 
-    pub fn mse(&self, input: &Vec<f32>, expected_output: &Vec<f32>) -> f32 {
+    pub fn mse(&mut self, input: &Vec<f32>, expected_output: &[f32]) -> f32 {
         let output = self.forward(input);
         let mut res = 0.0;
 
@@ -117,11 +122,11 @@ impl DynamicNetwork {
         self.randomize();
     }
 
-    pub fn forward_from_js(&self, input: &[f32]) -> Vec<f32> {
-        self.forward(&Vec::from(input))
+    pub fn forward_from_js(&mut self, input: &[f32]) -> Vec<f32> {
+        self.forward(&Vec::from(input)).clone()
     }
 
-    pub fn mse_from_js(&self, input: &[f32], expected_output: &[f32]) -> f32 {
+    pub fn mse_from_js(&mut self, input: &[f32], expected_output: &[f32]) -> f32 {
         self.mse(&Vec::from(input), &Vec::from(expected_output))
     }
 }
