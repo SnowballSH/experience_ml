@@ -25,15 +25,13 @@ jobs:
           sh ./build_rs.sh
           cd ./frontend
 
-      - name: Run install
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: install
-          
-      - name: Build production bundle
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: build
+      - name: Yarn
+        uses: mskelton/setup-yarn@v1
+        
+      - name: Build
+        run: |
+          yarn install
+          yarn build
           
       - name: GitHub Pages
         uses: crazy-max/ghaction-github-pages@v3.1.0
