@@ -1,1 +1,1 @@
-wasm-pack build --out-dir ./frontend/pkg --target bundler --release
+wasm-pack build --out-dir ./frontend/src/pkg --target bundler --release --no-default-features

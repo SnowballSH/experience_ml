@@ -5,7 +5,7 @@ import 'wired-elements';
 import './plotInput';
 import {PlotInput} from "./plotInput";
 
-import * as backend from '../pkg/';
+import * as backend from './pkg';
 
 @customElement('main-app')
 export class App extends LitElement {
