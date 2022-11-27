@@ -11,38 +11,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16.x
-          
-      - name: rust-toolchain
-        uses: actions-rs/toolchain@v1.0.6
-        with:
-          toolchain: nightly
-          target: wasm32-unknown-unknown
-          # Set installed toolchain as default
-          default: nightly
-          
-      - name: Wasm Pack
-        uses: jetli/wasm-pack-action@v0.4.0
-        with:
-          version: 'latest'
-      
-      - name: Build WASM
-        run: |
-          sh ./build_rs.sh
 
-      - name: Yarn
-        uses: mskelton/setup-yarn@v1
-        
-      - name: Build
-        run: |
-          cd ./frontend
-          yarn install
-          yarn run build
-          
       - name: GitHub Pages
         uses: crazy-max/ghaction-github-pages@v3.1.0
         with:
           # Build directory to deploy
-          build_dir: ./dist
+          build_dir: ./frontend/dist
           committer: SnowballSH
           author: SnowballSH
           
