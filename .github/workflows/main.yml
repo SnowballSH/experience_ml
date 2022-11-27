@@ -22,7 +22,7 @@ jobs:
       
       - name: Build WASM
         run: |
-          curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+          cargo install wasm-pack
           sh ./build_rs.sh
           cd ./frontend
 
