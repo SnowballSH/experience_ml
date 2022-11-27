@@ -63,7 +63,7 @@ export class PlotInput extends LitElement {
             ctx.clearRect(0, 0, this.width, this.height);
             ctx.drawImage(this.canvas!, 0, 0);
 
-            this.inputs.push([pos.x, pos.y]);
+            this.inputs.push([pos.x / this.width, pos.y / this.height]);
             let arr = [0, 0, 0];
             arr[this.pen] = 1;
             this.outputs.push(arr);

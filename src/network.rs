@@ -1,7 +1,8 @@
 use js_sys;
 use wasm_bindgen::prelude::*;
 
-use crate::activations::{sigmoid};
+use crate::activations::{derivative_sigmoid, sigmoid};
+use crate::utils::ArrayOfArrayBuilder;
 
 #[derive(Clone, Debug)]
 pub struct DynamicDenseLayer {
@@ -10,9 +11,13 @@ pub struct DynamicDenseLayer {
     pub weights: Vec<Vec<f32>>,
     pub biases: Vec<f32>,
     pub activation: fn(f32) -> f32,
+    pub derivative_activation: fn(f32) -> f32,
 
+    pub inputs: Vec<f32>,
     pub weighted_inputs: Vec<f32>,
     pub outputs: Vec<f32>,
+    pub cost_gradient_weight: Vec<Vec<f32>>,
+    pub cost_gradient_bias: Vec<f32>,
 }
 
 impl DynamicDenseLayer {
@@ -23,9 +28,13 @@ impl DynamicDenseLayer {
             weights: vec![vec![0.0; output_size]; input_size],
             biases: vec![0.0; output_size],
             activation: sigmoid,
+            derivative_activation: derivative_sigmoid,
 
+            inputs: vec![0.0; input_size],
             weighted_inputs: vec![0.0; output_size],
             outputs: vec![0.0; output_size],
+            cost_gradient_weight: vec![vec![0.0; output_size]; input_size],
+            cost_gradient_bias: vec![0.0; output_size],
         }
     }
 
@@ -41,6 +50,8 @@ impl DynamicDenseLayer {
     }
 
     pub fn forward(&mut self, input: &[f32]) -> &Vec<f32> {
+        self.inputs = input.to_vec();
+
         for out_node in 0..self.output_size {
             let mut acc = self.biases[out_node];
             for (in_node, val) in input.iter().enumerate() {
@@ -51,6 +62,62 @@ impl DynamicDenseLayer {
         }
 
         &self.outputs
+    }
+
+    pub fn output_node_values(&self, expected_output: &[f32]) -> Vec<f32> {
+        let mut node_values = vec![0.0; self.output_size];
+
+        for out_node in 0..self.output_size {
+            let cost = DynamicNetwork::derivative_mse_node(self.outputs[out_node], expected_output[out_node]);
+            let activation = (self.derivative_activation)(self.weighted_inputs[out_node]);
+            node_values[out_node] = activation * cost;
+        }
+
+        node_values
+    }
+
+    pub fn hidden_node_values(&self, next_layer: &DynamicDenseLayer, next_node_values: &[f32]) -> Vec<f32> {
+        let mut node_values = vec![0.0; self.output_size];
+
+        for out_node in 0..self.output_size {
+            let mut acc = 0.0;
+            for next_node in 0..next_layer.output_size {
+                acc += next_layer.weights[out_node][next_node] * next_node_values[next_node];
+            }
+            node_values[out_node] = (self.derivative_activation)(self.weighted_inputs[out_node]) * acc;
+        }
+
+        node_values
+    }
+
+    pub fn update_gradients(&mut self, node_values: &[f32]) {
+        for (out_node, node_val) in node_values.iter().enumerate() {
+            for (in_node, i_val) in self.inputs.iter().enumerate() {
+                self.cost_gradient_weight[in_node][out_node] += i_val * node_val;
+            }
+
+            self.cost_gradient_bias[out_node] += node_val;
+        }
+    }
+
+    pub fn apply_gradients(&mut self, learning_rate: f32) {
+        for our_node in 0..self.output_size {
+            self.biases[our_node] -= learning_rate * self.cost_gradient_bias[our_node];
+            for in_node in 0..self.input_size {
+                self.weights[in_node][our_node] -= learning_rate * self.cost_gradient_weight[in_node][our_node];
+            }
+        }
+    }
+
+    pub fn reset_gradients(&mut self) {
+        for i in 0..self.input_size {
+            for j in 0..self.output_size {
+                self.cost_gradient_weight[i][j] = 0.0;
+            }
+        }
+        for j in 0..self.output_size {
+            self.cost_gradient_bias[j] = 0.0;
+        }
     }
 }
 
@@ -110,6 +177,44 @@ impl DynamicNetwork {
 
         res / output.len() as f32
     }
+
+    pub fn update_all_gradients(&mut self, input: &Vec<f32>, expected_output: &[f32]) {
+        self.forward(input);
+
+        let output_layer = self.layers.last_mut().unwrap();
+        let mut node_values = output_layer.output_node_values(expected_output);
+
+        output_layer.update_gradients(&node_values);
+
+        for i in (0..=self.layers.len() - 2).rev() {
+            let layer = &self.layers[i];
+            node_values = layer.hidden_node_values(&self.layers[i + 1], &node_values);
+            self.layers[i].update_gradients(&node_values);
+        }
+    }
+
+    pub fn reset_all_gradients(&mut self) {
+        for layer in &mut self.layers {
+            layer.reset_gradients();
+        }
+    }
+
+    #[inline]
+    pub fn learn_one(&mut self, inputs: &Vec<f32>, expected_outputs: &[f32]) {
+        self.update_all_gradients(inputs, expected_outputs);
+    }
+
+    pub fn learn_batch(&mut self, inputs: &[Vec<f32>], expected_outputs: &[Vec<f32>], learning_rate: f32) {
+        for (input, expected_output) in inputs.iter().zip(expected_outputs.iter()) {
+            self.learn_one(input, expected_output);
+        }
+
+        for layer in &mut self.layers {
+            layer.apply_gradients(learning_rate);
+        }
+
+        self.reset_all_gradients();
+    }
 }
 
 #[wasm_bindgen]
@@ -128,5 +233,12 @@ impl DynamicNetwork {
 
     pub fn mse_from_js(&mut self, input: &[f32], expected_output: &[f32]) -> f32 {
         self.mse(&Vec::from(input), &Vec::from(expected_output))
+    }
+
+    pub fn learn_from_js(&mut self, inputs: &ArrayOfArrayBuilder, expected_outputs: &ArrayOfArrayBuilder, learning_rate: f32) {
+        let inputs_vec = inputs.get();
+        let expected_outputs_vec = expected_outputs.get();
+
+        self.learn_batch(inputs_vec, expected_outputs_vec, learning_rate);
     }
 }

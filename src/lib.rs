@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::utils::set_panic_hook;
 
-mod utils;
+pub mod utils;
 pub mod network;
 pub mod activations;
 

@@ -13,7 +13,8 @@ export class App extends LitElement {
 
     connectedCallback() {
         super.connectedCallback();
-        this.model = backend.DynamicNetwork.new_from_js(new Uint32Array([2, 4, 3]));
+        backend.init();
+        this.model = backend.DynamicNetwork.new_from_js(new Uint32Array([2, 4, 8, 3]));
         this.model.randomize_from_js();
     }
 
@@ -22,7 +23,9 @@ export class App extends LitElement {
             <div>
                 <body>
                 <p>
-                    <wired-button @click=${this.onClick}>Evaluate</wired-button>
+                    <wired-button @click=${this.evaluate}>Evaluate</wired-button>
+                    <wired-button @click=${this.learn}>Learn</wired-button>
+                    <wired-button @click=${this.randomize}>Randomize</wired-button>
                 </p>
                 <plot-input id="plti"></plot-input>
                 </body>
@@ -30,12 +33,15 @@ export class App extends LitElement {
         `;
     }
 
-    onClick() {
+    randomize() {
+        this.model!.randomize_from_js();
+    }
+
+    evaluate() {
         let plti = this.shadowRoot!.getElementById('plti') as PlotInput;
 
         let realCtx = plti.realCanvas!.getContext("2d")!;
 
-        this.model!.randomize_from_js();
         const colors = ['#ff9999', '#9eb9ff', '#a9ffa8'];
         const delta = 4;
 
@@ -60,10 +66,39 @@ export class App extends LitElement {
         for (let i = 0; i < dataX.length; i++) {
             const xs = dataX[i];
             const ys = dataY[i];
-            cost += this.model!.mse_from_js(new Float32Array(xs), new Float32Array(ys))
+            cost += this.model!.mse_from_js(new Float32Array(xs), new Float32Array(ys));
         }
 
         console.log(cost);
+    }
+
+    async learn() {
+        let plti = this.shadowRoot!.getElementById('plti') as PlotInput;
+
+        let inputs = plti.inputs;
+        let outputs = plti.outputs;
+
+        let input_builder = backend.ArrayOfArrayBuilder.new();
+        let output_builder = backend.ArrayOfArrayBuilder.new();
+
+        for (let i = 0; i < inputs.length; i++) {
+            input_builder.push(new Float32Array(inputs[i]));
+        }
+
+        for (let i = 0; i < outputs.length; i++) {
+            output_builder.push(new Float32Array(outputs[i]));
+        }
+
+        for (let j = 0; j < 100; j++) {
+            for (let i = 0; i < 200; i++) {
+                this.model!.learn_from_js(input_builder, output_builder, 0.015 - j * 0.0001);
+            }
+            this.evaluate();
+            await new Promise(r => setTimeout(r, 20));
+        }
+
+        input_builder.free();
+        output_builder.free();
     }
 
     static styles = css``;
