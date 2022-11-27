@@ -12,10 +12,11 @@ export default defineConfig({
         },
         rollupOptions: {
             external: /^lit/
-        }
+        },
     },
     plugins: [
         wasm(),
         topLevelAwait()
-    ]
+    ],
+    base: "./"
 });
