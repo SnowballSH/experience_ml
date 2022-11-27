@@ -19,4 +19,6 @@ jobs:
           build_dir: ./frontend/dist
           committer: SnowballSH
           author: SnowballSH
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
