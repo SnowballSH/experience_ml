@@ -79,12 +79,12 @@ impl DynamicDenseLayer {
     pub fn hidden_node_values(&self, next_layer: &DynamicDenseLayer, next_node_values: &[f32]) -> Vec<f32> {
         let mut node_values = vec![0.0; self.output_size];
 
-        for out_node in 0..self.output_size {
+        for (out_node, wi) in self.weighted_inputs.iter().enumerate() {
             let mut acc = 0.0;
-            for next_node in 0..next_layer.output_size {
-                acc += next_layer.weights[out_node][next_node] * next_node_values[next_node];
+            for (next_node, val) in next_node_values.iter().enumerate() {
+                acc += next_layer.weights[out_node][next_node] * val
             }
-            node_values[out_node] = (self.derivative_activation)(self.weighted_inputs[out_node]) * acc;
+            node_values[out_node] = (self.derivative_activation)(*wi) * acc;
         }
 
         node_values
