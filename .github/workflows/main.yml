@@ -2,7 +2,7 @@ name: CI
 on: [push]
 jobs:
   build:
-    name: Test
+    name: Build Webpage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -19,10 +19,14 @@ jobs:
           target: wasm32-unknown-unknown
           # Set installed toolchain as default
           default: nightly
+          
+      - name: Wasm Pack
+        uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: 'latest'
       
       - name: Build WASM
         run: |
-          cargo install wasm-pack
           sh ./build_rs.sh
           cd ./frontend
 
