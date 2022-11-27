@@ -9,14 +9,12 @@ import * as backend from '../pkg/';
 
 @customElement('main-app')
 export class App extends LitElement {
+    static styles = css``;
     model: backend.DynamicNetwork | null = null;
-
     @property({type: String})
     cost: number = NaN;
-
     @property({type: String})
     trainingProgress: string = "N/A";
-
     @property({type: String})
     numCorrect: string = "N/A";
 
@@ -125,8 +123,6 @@ export class App extends LitElement {
         input_builder.free();
         output_builder.free();
     }
-
-    static styles = css``;
 }
 
 declare global {

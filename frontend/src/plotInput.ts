@@ -8,24 +8,42 @@ const radius = 8;
 
 @customElement('plot-input')
 export class PlotInput extends LitElement {
+    static styles = css`
+        .plot-input-canvas {
+            border: 1px solid black;
+            background-color: #fafafa;
+            
+            cursor: crosshair;
+        }
+        
+        .plot-input-button-red {
+            background-color: #ff5959;
+        }
+        
+        .plot-input-button-blue {
+            background-color: #59d8ff;
+        }
+        
+        .plot-input-button-green {
+            background-color: #59ff7d;
+        }
+        
+        .plot-input-button-clear {
+            background-color: whitesmoke;
+        }
+    `;
     @property({type: String})
     id: string = "1";
-
     @property({type: Number})
     width: number = 800;
-
     @property({type: Number})
     height: number = 600;
-
     @property({type: Number})
     pen: number = 0;
-
     inputs: number[][] = [];
     outputs: number[][] = [];
-
     canvas: HTMLCanvasElement | null = null;
     roughCanvas: RoughCanvas | null = null;
-
     realCanvas: HTMLCanvasElement | null = null;
 
     getMousePos(e: MouseEvent) {
@@ -129,31 +147,6 @@ export class PlotInput extends LitElement {
             </div>
         `;
     }
-
-    static styles = css`
-        .plot-input-canvas {
-            border: 1px solid black;
-            background-color: #fafafa;
-            
-            cursor: crosshair;
-        }
-        
-        .plot-input-button-red {
-            background-color: #ff5959;
-        }
-        
-        .plot-input-button-blue {
-            background-color: #59d8ff;
-        }
-        
-        .plot-input-button-green {
-            background-color: #59ff7d;
-        }
-        
-        .plot-input-button-clear {
-            background-color: whitesmoke;
-        }
-    `;
 }
 
 declare global {
