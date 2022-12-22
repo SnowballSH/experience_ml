@@ -18,34 +18,107 @@ export class App extends LitElement {
     @property({type: String})
     numCorrect: string = "N/A";
 
+    learning: boolean = false;
+
+    @property({type: Number})
+    weight1: number = 8;
+    @property({type: Number})
+    weight2: number = 4;
+    @property({type: Number})
+    weight3: number = 0;
+
     connectedCallback() {
         super.connectedCallback();
         backend.init();
-        this.model = backend.DynamicNetwork.new_from_js(new Uint32Array([2, 8, 4, 3]));
+        this.model = backend.DynamicNetwork.new_from_js(this.topology());
         this.model.randomize_from_js();
+    }
+
+    topology() {
+        if (this.weight3 !== 0) {
+            return new Uint32Array([2, this.weight1, this.weight2, this.weight3, 3]);
+        }
+        return new Uint32Array([2, this.weight1, this.weight2, 3]);
     }
 
     render() {
         return html`
             <div>
                 <body>
-                <p>
-                    <wired-button @click=${this.evaluate}>Evaluate</wired-button>
-                    <wired-button @click=${this.learn}>Learn</wired-button>
-                    <wired-button @click=${this.randomize}>Randomize</wired-button>
-                </p>
-                <p>
-                <h3>Current Cost: ${this.cost}</h3>
-                <h3>Training Progress: ${this.trainingProgress}</h3>
-                <h3>Number Correct: ${this.numCorrect}</h3>
-                </p>
-                <plot-input id="plti"></plot-input>
+                <div style="display: flex; flex-wrap: wrap;">
+                    <div style="flex: 1;">
+                        <p>
+                            <wired-button @click=${this.evaluate}>Evaluate</wired-button>
+                            <wired-button @click=${this.learn}>Learn</wired-button>
+                            <wired-button @click=${this.randomize}>Randomize</wired-button>
+                        </p>
+                        <p>
+
+                            <wired-slider value="8" min="1" max="32" id="weight-1" @change=${(x: CustomEvent) => {
+                                this.weight1 = x.detail.value;
+                                this.model!.free();
+                                this.model = backend.DynamicNetwork.new_from_js(this.topology());
+                                this.model.randomize_from_js();
+                            }}></wired-slider>
+
+                            Hidden Layer 1: ${this.weight1} neurons
+                        </p>
+                        <p>
+                            <wired-slider value="4" min="1" max="64" id="weight-2" @change=${(x: CustomEvent) => {
+                                this.weight2 = x.detail.value;
+                                this.model!.free();
+                                this.model = backend.DynamicNetwork.new_from_js(this.topology());
+                                this.model.randomize_from_js();
+                            }}></wired-slider>
+                            Hidden Layer 2: ${this.weight2} neurons
+                        </p>
+                        <p>
+                            <wired-slider value="0" min="0" max="16" id="weight-3" @change=${(x: CustomEvent) => {
+                                this.weight3 = x.detail.value;
+                                this.model!.free();
+                                this.model = backend.DynamicNetwork.new_from_js(this.topology());
+                                this.model.randomize_from_js();
+                            }}></wired-slider>
+                            Hidden Layer 3: ${this.weight3 === 0 ? "0 (Disabled)" : this.weight3} neurons
+                        </p>
+                        <p>
+                        <h3>Network Architecture: 2 -> ${this.weight1} ->
+                            ${this.weight2}${this.weight3 !== 0 ? ` -> ${this.weight3}` : ''} -> 3</h3>
+                        <h3>Current Cost: ${this.cost}</h3>
+                        <h3>Training Progress: ${this.trainingProgress}</h3>
+                        <h3>Number Correct: ${this.numCorrect}</h3>
+                        </p>
+
+                        <br/>
+
+                        <p>
+                            Usage:
+                        <ul>
+                            <li>Plot tri-labelled data on the canvas.</li>
+                            <li>Click "Learn" to train the network.</li>
+                            <li>Try out different number of neurons! Larger neural networks can solve more complicated
+                                data, but learns slower.
+                            </li>
+                        </ul>
+                        </p>
+
+                        <br/>
+                    </div>
+
+                    <div style="flex: 1; margin-left: 20px">
+                        <plot-input id="plti"></plot-input>
+                    </div>
+                </div>
                 </body>
             </div>
         `;
     }
 
     randomize() {
+        if (this.learning) {
+            return;
+        }
+
         this.model!.randomize_from_js();
         this.cost = NaN;
         this.trainingProgress = "N/A";
@@ -95,6 +168,12 @@ export class App extends LitElement {
     }
 
     async learn() {
+        if (this.learning) {
+            return;
+        }
+
+        this.learning = true;
+
         let plti = this.shadowRoot!.getElementById('plti') as PlotInput;
 
         let inputs = plti.inputs;
@@ -122,6 +201,8 @@ export class App extends LitElement {
 
         input_builder.free();
         output_builder.free();
+
+        this.learning = false;
     }
 }
 

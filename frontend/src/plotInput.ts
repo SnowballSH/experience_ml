@@ -102,6 +102,9 @@ export class PlotInput extends LitElement {
     connectedCallback() {
         super.connectedCallback();
 
+        this.width = Math.min(window.innerWidth * 0.7, 800);
+        this.height = Math.min(window.innerHeight * 0.7, 600);
+
         window.addEventListener('mousedown', this.onMouseDown.bind(this));
     }
 
