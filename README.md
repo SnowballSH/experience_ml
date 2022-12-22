@@ -6,4 +6,7 @@ Web interface written in TypeScript using the Lit-element framework.
 
 ML algorithm backend is hand-written in Rust, compiled to WASM for client-side use. **Zero external library** is used in the algorithm.
 
-![image](https://user-images.githubusercontent.com/66022611/204119168-9bda48c8-9949-4a96-9433-0e4aba755075.png)
+https://snowballsh.github.io/experience_ml/
+
+<img width="1592" alt="Demo" src="https://user-images.githubusercontent.com/66022611/209244495-d75b9404-507f-4a69-9c3c-0cec5ffceba3.png">
+
