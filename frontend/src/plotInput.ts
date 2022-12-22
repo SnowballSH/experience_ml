@@ -3,6 +3,7 @@ import {customElement, property} from 'lit/decorators.js';
 import 'wired-elements';
 import rough from 'roughjs';
 import {RoughCanvas} from "roughjs/bin/canvas";
+import example from "./example.json";
 
 const radius = 8;
 
@@ -26,6 +27,10 @@ export class PlotInput extends LitElement {
         
         .plot-input-button-green {
             background-color: #59ff7d;
+        }
+        
+        .plot-input-button-ex {
+            background-color: #ffe599;
         }
         
         .plot-input-button-clear {
@@ -54,37 +59,41 @@ export class PlotInput extends LitElement {
         };
     }
 
+    draw(pos: { x: number, y: number }) {
+        switch (this.pen) {
+            case 0:
+                this.roughCanvas!.circle(pos.x, pos.y, radius * 2, {fill: '#fc3636', roughness: 1.3});
+                break;
+            case 1:
+                this.roughCanvas!.rectangle(pos.x - radius, pos.y - radius, radius * 2, radius * 2, {
+                    fill: '#4579fb',
+                    roughness: 1.5,
+                    fillStyle: 'cross-hatch'
+                });
+                break;
+            case 2:
+                this.roughCanvas!.circle(pos.x, pos.y, radius * 2, {
+                    fill: '#48fb45',
+                    roughness: 3.0,
+                    fillStyle: 'zigzag',
+                });
+                break;
+        }
+
+        let ctx = this.realCanvas!.getContext("2d")!;
+        ctx.clearRect(0, 0, this.width, this.height);
+        ctx.drawImage(this.canvas!, 0, 0);
+
+        this.inputs.push([pos.x / this.width, pos.y / this.height]);
+        let arr = [0, 0, 0];
+        arr[this.pen] = 1;
+        this.outputs.push(arr);
+    }
+
     onMouseDown(e: MouseEvent) {
         const pos = this.getMousePos(e);
-        if (pos.x > 0 && pos.y > 0) {
-            switch (this.pen) {
-                case 0:
-                    this.roughCanvas!.circle(pos.x, pos.y, radius * 2, {fill: '#fc3636', roughness: 1.3});
-                    break;
-                case 1:
-                    this.roughCanvas!.rectangle(pos.x - radius, pos.y - radius, radius * 2, radius * 2, {
-                        fill: '#4579fb',
-                        roughness: 1.5,
-                        fillStyle: 'cross-hatch'
-                    });
-                    break;
-                case 2:
-                    this.roughCanvas!.circle(pos.x, pos.y, radius * 2, {
-                        fill: '#48fb45',
-                        roughness: 3.0,
-                        fillStyle: 'zigzag',
-                    });
-                    break;
-            }
-
-            let ctx = this.realCanvas!.getContext("2d")!;
-            ctx.clearRect(0, 0, this.width, this.height);
-            ctx.drawImage(this.canvas!, 0, 0);
-
-            this.inputs.push([pos.x / this.width, pos.y / this.height]);
-            let arr = [0, 0, 0];
-            arr[this.pen] = 1;
-            this.outputs.push(arr);
+        if (pos.x > 0 && pos.y > 0 && pos.x < this.width && pos.y < this.height) {
+            this.draw(pos);
         }
     }
 
@@ -128,6 +137,22 @@ export class PlotInput extends LitElement {
         this.outputs = [];
     }
 
+    example() {
+        this.canvas!.getContext("2d")!.clearRect(0, 0, this.width, this.height);
+        this.realCanvas!.getContext("2d")!.clearRect(0, 0, this.width, this.height);
+
+        const Inputs = example[0];
+        const Outputs = example[1];
+
+        for (let i = 0; i < Inputs.length; i++) {
+            this.choosePen(Outputs[i].findIndex((x: number) => x)!);
+            this.draw({x: Inputs[i][0] * this.width, y: Inputs[i][1] * this.height});
+        }
+
+        this.choosePen(0);
+    }
+
+
     render() {
         return html`
             <div>
@@ -139,6 +164,8 @@ export class PlotInput extends LitElement {
                 </wired-button>
                 <wired-button @click=${() => this.choosePen(2)} class="plot-input-button-green"
                               style=${this.pen === 2 ? "transform: translateY(4px)" : ""}>Green
+                </wired-button>
+                <wired-button @click=${() => this.example()} class="plot-input-button-ex">Example
                 </wired-button>
                 <wired-button @click=${this.clearCanvas} class="plot-input-button-clear">Clear</wired-button>
                 <br/>
